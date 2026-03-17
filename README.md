@@ -2,9 +2,9 @@
 
 This package implements the assignment *“Path Smoothing and Trajectory Control in 2D Space”* using ROS 2 and Python. It contains:
 
-- **Path smoothing** of discrete waypoints using a cubic B‑spline.
-- **Time‑parameterised trajectory generation** with constant linear velocity.
-- **Trajectory tracking controller** for a differential‑drive (unicycle) robot.
+- **Path smoothing** of discrete waypoints using a cubic B-spline.
+- **Time-parameterised trajectory generation** with constant linear velocity.
+- **Trajectory tracking controller** for a differential-drive (unicycle) robot.
 - **Simple 2D simulator** that integrates `cmd_vel` and publishes odometry + RViz marker.
 
 The architecture is deliberately modular: each stage (waypoints → smoothing → trajectory → control → simulation) is a separate ROS 2 node connected by standard messages.
@@ -13,7 +13,7 @@ The architecture is deliberately modular: each stage (waypoints → smoothing �
 
 ### 1. Setup Instructions
 
-- **Dependencies (system / ROS 2):**
+- **Dependencies (system / ROS2):**
   - ROS 2 (tested with `rclpy`, `nav_msgs`, `geometry_msgs`, `visualization_msgs`)
   - Python 3
   - Python libraries: `numpy`, `scipy`, `matplotlib` (for plotting)
@@ -37,7 +37,7 @@ sudo apt-get install python3-numpy python3-scipy python3-matplotlib
 
 ### 2. Execution Instructions
 
-1. **Build and source the workspace**
+1. **Build and source the workspace.**
 
    ```bash
    cd /home/dsn/nav_ws
@@ -45,7 +45,7 @@ sudo apt-get install python3-numpy python3-scipy python3-matplotlib
    source install/setup.bash
    ```
 
-2. **Run the full navigation pipeline**
+2. **Run the full navigation pipeline.**
 
    ```bash
    ros2 launch navigation navigation_launch.py
@@ -58,7 +58,7 @@ sudo apt-get install python3-numpy python3-scipy python3-matplotlib
    - `controller` – tracks the trajectory and publishes `cmd_vel`.
    - `sim_robot` – simulates a differential‑drive robot and publishes `odom` + a marker.
 
-3. **Visualise in RViz (optional but recommended)**
+3. **Visualise in RViz (optional but recommended).**
 
    In another terminal:
 
@@ -75,7 +75,7 @@ sudo apt-get install python3-numpy python3-scipy python3-matplotlib
    - Add `Odometry` or `Pose` display for `/odom`.
    - Add `Marker` display for `/robot_marker`.
 
-4. **Configuring behaviour (example parameters)**
+4. **Configuring behaviour (example parameters).**
 
    You can override parameters on the command line, e.g.:
 
@@ -95,8 +95,8 @@ The system is organised as a **linear pipeline of ROS 2 nodes**:
 
 1. **`waypoints` (`navigation/waypoints.py`)**
    - Publishes a `nav_msgs/Path` on the `waypoints` topic.
-   - Currently uses a **hard‑coded list of (x, y) waypoints**:
-     \[(0, 0), (1, 1), (2, 1), (3, 2)\].
+   - Currently uses a **hard-coded list of (x, y) waypoints**:
+     `(0, 0), (1, 1), (2, 1), (3, 2)`.
    - In a real application this could be:
      - Loaded from configuration / map,
      - Produced by a global planner (e.g., A* or sampling‑based planner),
@@ -105,7 +105,7 @@ The system is organised as a **linear pipeline of ROS 2 nodes**:
 2. **`path_smoothening` (`navigation/path_smoothening.py`)**
    - Subscribes: `waypoints` (`nav_msgs/Path`).
    - Publishes: `smoothed_path` (`nav_msgs/Path`).
-   - Implements the **path smoothing** step using a *cubic B‑spline*.
+   - Implements the **path smoothing** step using a *cubic B-spline*.
    - The logic is isolated in the method:
      - `smooth_path(path_msg, smoothing, num_points) -> Path`
    - Design choice: treat smoothing as **purely geometric** (only x/y positions, no timing), making this node reusable for other planners.
@@ -117,7 +117,7 @@ The system is organised as a **linear pipeline of ROS 2 nodes**:
    - The method:
      - `_build_trajectory(path_msg) -> Path`
      - Accumulates arc length along the smoothed path; for each segment:
-       \(\Delta t = \frac{\text{segment length}}{\text{velocity}}\).
+       $\Delta t = \frac{d_{\mathrm{seg}}}{v}$.
      - Encodes the desired time in each `PoseStamped.header.stamp`.
    - Design choice: keep the message type as `nav_msgs/Path` to stay ROS‑native and simple, instead of defining a custom trajectory message.
 
@@ -127,7 +127,7 @@ The system is organised as a **linear pipeline of ROS 2 nodes**:
      - `odom` (`nav_msgs/Odometry`).
    - Publishes:
      - `cmd_vel` (`geometry_msgs/Twist`).
-   - Implements a **lookahead‑based trajectory tracker**:
+   - Implements a **lookahead-based trajectory tracker**:
      - Conceptually similar to *pure pursuit*:
        - Find a point ahead along the path,
        - Drive towards it while controlling heading error.
@@ -153,12 +153,13 @@ The system is organised as a **linear pipeline of ROS 2 nodes**:
      - `odom` (`nav_msgs/Odometry`) in `map` frame,
      - `robot_marker` (`visualization_msgs/Marker`) for RViz.
    - Implements a **unicycle kinematic model**:
-     - State: \((x, y, \theta)\).
+     - State: $(x, y, \theta)$.
      - Dynamics:
-       - \(\dot{x} = v \cos\theta\),
-       - \(\dot{y} = v \sin\theta\),
-       - \(\dot{\theta} = \omega\).
-     - Integrated forward with a fixed time step (0.05 s).
+       - $\dot{x} = v \cos\theta$
+       - $\dot{y} = v \sin\theta$
+       - $\dot{\theta} = \omega$
+
+     - Integrated forward with a fixed time step (0.05 s).
    - Design choice: keep the simulator **deterministic and ideal** (no noise, no slip, no dynamics), which makes controller behaviour easier to interpret and plot.
 
 6. **Launch file (`launch/navigation_launch.py`)**
@@ -174,28 +175,28 @@ This modular architecture makes it trivial to:
 
 ### 4. Algorithms and Design Choices
 
-#### 4.1 Path Smoothing – Cubic B‑spline (`PathSmoothening`)
+#### 4.1 Path Smoothing – Cubic B-spline (`PathSmoothening`)
 
-- Input: discrete waypoints \(\{(x_i, y_i)\}_{i=0}^{N-1}\).
+- Input: discrete waypoints $\{(x_i, y_i)\}$ for $i = 0 \dots N-1$.
 - We use `scipy.interpolate.splprep` / `splev`:
-  - Build a cubic B‑spline with global smoothing factor `s`:
+  - Build a cubic B-spline with global smoothing factor `s`:
     - `s = smoothing` parameter (larger → smoother, more deviation).
-  - Sample `num_points` evenly spaced parameters \(u \in [0, 1]\) to get a dense set of \((x, y)\) points.
+  - Sample `num_points` evenly spaced parameters $u \in [0, 1]$ to get a dense set of $(x, y)$ points.
 - Edge cases:
   - If there are fewer than 4 points, or the spline fit fails (e.g. due to duplicate points), the node logs a warning and **falls back to publishing the original path**.
 - Design rationale:
-  - B‑splines provide \(C^2\) continuity (continuous curvature), which is appropriate for smooth differential‑drive motion.
-  - Using SciPy keeps the implementation concise and numerically well‑tested.
+  - B-splines provide $C^2$ continuity (continuous curvature), which is appropriate for smooth differential-drive motion.
+  - Using SciPy keeps the implementation concise and numerically well-tested.
 
 #### 4.2 Trajectory Generation – Constant Velocity (`TrajectoryGen`)
 
-- Objective: convert a geometric path into a **time‑stamped trajectory**.
+- Objective: convert a geometric path into a **time-stamped trajectory**.
 - Algorithm:
   1. Walk along the sequence of smoothed points.
   2. For each segment between consecutive points:
-     - Compute distance \(d = \sqrt{\Delta x^2 + \Delta y^2}\).
-     - Compute \(\Delta t = d / v\) where \(v\) is the configured constant velocity.
-     - Accumulate time: \(t \leftarrow t + \Delta t\).
+     - Compute distance $d = \sqrt{\Delta x^2 + \Delta y^2}$.
+     - Compute $\Delta t = d / v$ where $v$ is the configured constant velocity.
+     - Accumulate time: $t \leftarrow t + \Delta t$.
   3. Set `PoseStamped.header.stamp = base_time + t`.
 - Design trade‑offs:
   - **Constant velocity** assumption keeps the logic transparent and is sufficient for the assignment.
@@ -206,20 +207,21 @@ This modular architecture makes it trivial to:
 - The controller implements a **lookahead policy**:
 
   1. **Find a nearby point on the trajectory:**
-     - Within a window \([i_\text{min}, i_\text{max}]\) around the current index, pick the index with the minimum squared distance to the robot.
+     - Within a window [i_min, i_max] around the current index, pick the index with the minimum squared distance to the robot.
   2. **Look ahead** by a configurable number of indices (`lookahead_points`) to anticipate motion.
-  3. Compute target point \((x_t, y_t)\) and current pose \((x, y, \theta)\).
+  3. Compute target point $(x_t, y_t)$ and current pose $(x, y, \theta)$.
   4. Compute:
-     - Position error: \(d = \sqrt{(x_t - x)^2 + (y_t - y)^2}\).
-     - Desired heading: \(\theta_d = \text{atan2}(y_t - y, x_t - x)\).
-     - Heading error: \(e_\theta = \text{wrap\_to\_pi}(\theta_d - \theta)\).
+     - Position error: $d = \sqrt{(x_t - x)^2 + (y_t - y)^2}$.
+     - Desired heading: $\theta_d = \operatorname{atan2}(y_t - y, x_t - x)$.
+     - Heading error: $e_\theta = \operatorname{wrapToPi}(\theta_d - \theta)$.
   5. Control laws:
-     - Angular velocity:
-       - \(\omega = \text{sat}(k_\text{ang} \cdot e_\theta, \pm \text{max\_w})\).
-     - Linear velocity:
-       - \(v = \max(0, \min(k_\text{lin} \cdot d, \text{max\_v}))\).
-       - If \(|e_\theta| > \text{rotate\_in\_place\_yaw}\), set \(v = 0\) (rotate in place).
-  6. When the robot is close to the final goal (distance < `goal_tolerance`), command \(v = 0, \omega = 0\).
+     - Angular velocity: $\omega = \operatorname{sat}(k_{\text{ang}} \cdot e_\theta, \pm \omega_{\max})$
+
+     - Linear velocity: $v = \max(0, \min(k_{\text{lin}} \cdot d, v_{\max}))$
+
+       If $|e_\theta| > \theta_{\text{rotate}}$, set $v = 0$ (rotate in place).
+
+  6. When the robot is close to the final goal (distance < `goal_tolerance`), command $v = 0$, $\omega = 0$.
 
 - Design considerations:
   - Lookahead avoids “orbiting” behaviour around a single target waypoint.
@@ -337,4 +339,3 @@ During development of this package, AI‑assisted tools (e.g. large language mod
 - Proposing controller design variations (e.g. lookahead, rotate‑in‑place logic).
 
 All ROS‑specific details, interfaces, and final design decisions were reviewed to ensure they remain consistent with the assignment objectives and ROS 2 best practices.
-
