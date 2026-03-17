@@ -212,10 +212,10 @@ This modular architecture makes it trivial to:
   3. Compute target point $(x_t, y_t)$ and current pose $(x, y, \theta)$.
   4. Compute:
      - Position error: $d = \sqrt{(x_t - x)^2 + (y_t - y)^2}$.
-     - Desired heading: $\theta_d = \operatorname{atan2}(y_t - y, x_t - x)$.
-     - Heading error: $e_\theta = \operatorname{wrapToPi}(\theta_d - \theta)$.
+     - Desired heading: $\theta_d = \mathrm{atan2}(y_t - y, x_t - x)$.
+     - Heading error: $e_\theta = \mathrm{wrapToPi}(\theta_d - \theta)$.
   5. Control laws:
-     - Angular velocity: $\omega = \operatorname{sat}(k_{\text{ang}} \cdot e_\theta, \pm \omega_{\max})$
+     - Angular velocity: $\omega = \mathrm{sat}(k_{\text{ang}} \cdot e_\theta, \pm \omega_{\max})$
 
      - Linear velocity: $v = \max(0, \min(k_{\text{lin}} \cdot d, v_{\max}))$
 
