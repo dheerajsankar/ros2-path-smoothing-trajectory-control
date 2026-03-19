@@ -1,6 +1,6 @@
-## Navigation Assignment – Path Smoothing & Trajectory Control
+## Path Smoothing & Trajectory Control
 
-This package implements the assignment *“Path Smoothing and Trajectory Control in 2D Space”* using ROS 2 and Python. It contains:
+This package implements  *“Path Smoothing and Trajectory Control in 2D Space”* using ROS 2 and Python. It contains:
 
 - **Path smoothing** of discrete waypoints using a cubic B-spline.
 - **Time-parameterised trajectory generation** with constant linear velocity.
@@ -198,9 +198,6 @@ This modular architecture makes it trivial to:
      - Compute $\Delta t = d / v$ where $v$ is the configured constant velocity.
      - Accumulate time: $t \leftarrow t + \Delta t$.
   3. Set `PoseStamped.header.stamp = base_time + t`.
-- Design trade‑offs:
-  - **Constant velocity** assumption keeps the logic transparent and is sufficient for the assignment.
-  - More advanced profiles (e.g. trapezoidal, S‑curve) could be added later by shaping `v(t)` instead of keeping it constant.
 
 #### 4.3 Trajectory Tracking Controller (`Controller`)
 
@@ -282,60 +279,3 @@ This PNG can be used directly in your submission report or slides.
    plt.show()
    ```
 
-These plots can be used directly in the assignment video and report to demonstrate how well the controller follows the smoothed trajectory.
-
----
-
-### 6. Extending to a Real Robot
-
-To run this on a real differential‑drive platform (e.g. TurtleBot3):
-
-1. **Replace / integrate the simulator**
-   - Instead of `sim_robot`, use:
-     - The robot’s **odometry topic** as `/odom` (or remap in the launch file),
-     - The robot’s **command interface** as `/cmd_vel`.
-   - The rest of the pipeline (waypoints → smoothing → trajectory → controller) remains unchanged.
-
-2. **Calibration and frames**
-   - Ensure that all nodes use a consistent frame (e.g. `map` or `odom`).
-   - If localisation is available (SLAM / AMCL), use its pose estimate as `/odom`.
-
-3. **Safety and limits**
-   - Set `max_v` and `max_w` parameters to safe values for your platform.
-   - Optionally, insert a safety filter node between `controller` and the robot driver (e.g. for collision checking, emergency stop).
-
-The architectural separation between **planning / smoothing**, **trajectory generation**, **control**, and **actuation** makes the transition from simulation to hardware largely a matter of interfacing and tuning.
-
----
-
-### 7. Extra Credit – Obstacle Avoidance (Design Sketch)
-
-To extend the system for obstacle avoidance:
-
-1. **Perception / mapping**
-   - Subscribe to a laser scan or depth camera topic.
-   - Build a 2D occupancy grid or costmap.
-
-2. **Local replanning / path modification**
-   - Either:
-     - Insert a **local planner** node between `waypoints` and `path_smoothening` to re‑route around obstacles, or
-     - Add an **online obstacle‑aware layer** that deforms the smoothed path in response to nearby obstacles (e.g. potential fields or elastic bands).
-
-3. **Controller integration**
-   - Keep the controller unchanged; it simply tracks whatever updated trajectory it receives.
-   - Ensure the planner reacts fast enough to keep the path collision‑free.
-
-This preserves the modularity of the architecture and makes it easy to swap different obstacle‑avoidance strategies.
-
----
-
-### 8. AI Tools Used
-
-During development of this package, AI‑assisted tools (e.g. large language models / code assistants) were used primarily for:
-
-- Structuring the code into clean, modular ROS 2 nodes.
-- Drafting and refining docstrings and README documentation.
-- Suggesting robust edge‑case handling (e.g. spline fallback behaviour).
-- Proposing controller design variations (e.g. lookahead, rotate‑in‑place logic).
-
-All ROS‑specific details, interfaces, and final design decisions were reviewed to ensure they remain consistent with the assignment objectives and ROS 2 best practices.
